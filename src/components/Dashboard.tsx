@@ -1,61 +1,82 @@
-"use client";
+"use client"; // ✅ Must be at the top of the file
 
 import { useTheme } from "@/hooks/useTheme";
+import { useState, useEffect } from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import Image from "next/image"; // ✅ Import the Image component from next/image
 
 const Dashboard = () => {
   const { isDarkMode } = useTheme();
+  const [currentDate, setCurrentDate] = useState("");
+
+  useEffect(() => {
+    const updateDate = () => {
+      const now = new Date();
+      const options: Intl.DateTimeFormatOptions = { weekday: "long", day: "numeric", month: "long", year: "numeric" };
+      setCurrentDate(now.toLocaleDateString(undefined, options));
+    };
+
+    updateDate(); // Set initial date
+    const interval = setInterval(updateDate, 60000); // Update every minute
+
+    return () => clearInterval(interval); // Cleanup interval on unmount
+  }, []);
 
   return (
     <main
-      className={`flex-1 p-8 transition-all shadow-xl  ${
+      className={`flex-1 p-8 transition-all shadow-xl ${
         isDarkMode
-          ? "bg-gray-100 text-gray-900 border-gray-700"
-          : "bg-gray-50 text-gray-900 border-gray-300"
+          ? "bg-gray-200 text-gray-900 border-gray-700"
+          : "bg-gray-200 text-gray-900 border-gray-300"
       }`}
     >
       {/* Header */}
-      <header className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">Home</h1>
-          <p className="text-gray-500">Welcome back! 🚀</p>
-        </div>
-
-        {/* 📌 Action Buttons */}
-        <div className="space-x-3">
-          <button className="bg-blue-500 text-white px-6 py-2 rounded-full shadow-md hover:bg-blue-600 transition">
-            Start New Lesson
-          </button>
-          <button className="bg-gray-300 text-gray-700 px-6 py-2 rounded-full shadow-md hover:bg-gray-400 transition">
-            View Stats
-          </button>
-        </div>
+      <header className="flex flex-col mb-6">
+        <h1 className="text-3xl font-bold">Welcome, Darion!</h1>
+        <p className="text-gray-500 text-lg">Today is {currentDate}</p>
       </header>
 
+      {/* Quick Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <StatCard title="Total Users" value="1,234" icon="👥" />
+        <StatCard title="Active Users" value="56" icon="🔥" /> {/* Fixed */}
+        <StatCard title="Pending Approvals" value="12" icon="⏳" />
+        <StatCard title="New Messages" value="5" icon="✉️" />
+      </div>
+
       {/* My Activity - Bar Graph */}
-      <section className="mt-6 bg-white p-6 rounded-3xl shadow-md">
+      <section className="mt-6 bg-white p-6 rounded-3xl shadow-3d">
         <h2 className="text-lg font-semibold mb-4">My Activity</h2>
         <ActivityBarChart />
       </section>
-{/* Your Team Member Section */}
-<section className="mt-6 bg-white p-6 rounded-3xl shadow-md flex justify-between items-center">
-  <h2 className="text-lg font-semibold">Your Team Member</h2>
-  
-  {/* More Button */}
-  <button className="text-blue-500 text-sm font-medium hover:underline">More</button>
-</section>
 
-
-      {/* Popular Courses */}
-      <section className="mt-6">
-        <h2 className="text-lg font-semibold mb-4">Popular Courses</h2>
-        <CourseList />
+      {/* Your Team Members Section */}
+      <section className="mt-6 bg-white p-6 rounded-3xl shadow-3d">
+        <h2 className="text-lg font-semibold mb-4">Your Team Members</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <TeamMember name="John Doe" role="Admin" image="/profiles/john-doe.jpg" />
+          <TeamMember name="Jane Smith" role="Teacher" image="/profiles/jane-smith.jpg" />
+          <TeamMember name="Alice Johnson" role="Student" image="/profiles/alice-johnson.jpg" />
+        </div>
       </section>
     </main>
   );
 };
 
-// ✅ My Activity - Bar Graph Component (Rounded & Smooth)
+// ✅ Stat Card Component
+const StatCard = ({ title, value, icon }: { title: string; value: string; icon: string }) => {
+  return (
+    <div className="bg-white p-6 rounded-3xl shadow-3d hover:shadow-3d-hover transition-transform transform hover:-translate-y-1 flex justify-between items-center">
+      <div>
+        <p className="text-gray-500 text-sm">{title}</p>
+        <p className="text-2xl font-bold">{value}</p>
+      </div>
+      <span className="text-3xl">{icon}</span>
+    </div>
+  );
+};
+
+// ✅ My Activity - Bar Graph Component
 const ActivityBarChart = () => {
   const data = [
     { day: "Mon", activity: 10 },
@@ -68,7 +89,7 @@ const ActivityBarChart = () => {
   ];
 
   return (
-    <div className="w-full h-56 rounded-3xl bg-gradient-to-r from-blue-100 to-blue-200 p-4 shadow-md">
+    <div className="w-full h-56 rounded-3xl bg-gradient-to-r from-blue-100 to-blue-200 p-4 shadow-3d">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data}>
           <XAxis dataKey="day" stroke="#4F46E5" />
@@ -81,32 +102,26 @@ const ActivityBarChart = () => {
   );
 };
 
-// ✅ Team Member List Component
-const TeamMemberList = () => {
+// ✅ Team Member Component (Rounded Button Profile)
+const TeamMember = ({ name, role, image }: { name: string; role: string; image: string }) => {
   return (
-    <div className="flex space-x-4">
-      {[1, 2, 3].map((i) => (
-        <div key={i} className="w-16 h-16 bg-gray-300 rounded-full shadow-md"></div>
-      ))}
-    </div>
+    <button className="flex flex-col items-center space-y-2 p-4 bg-white rounded-full shadow-3d hover:shadow-3d-hover transition-transform transform hover:-translate-y-1">
+      <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-blue-500">
+        <Image
+          src={image}
+          alt={name}
+          width={64}
+          height={64}
+          className="rounded-full object-cover"
+        />
+      </div>
+      <div className="text-center">
+        <p className="font-semibold">{name}</p>
+        <p className="text-sm text-gray-500">{role}</p>
+      </div>
+    </button>
   );
 };
 
-// ✅ Course List Component (Rounded Cards)
-const CourseList = () => {
-  return (
-    <div className="flex space-x-4">
-      <div className="p-4 bg-white rounded-3xl shadow-md w-40 hover:shadow-lg transition">
-        <p className="text-sm font-medium">German Grammar</p>
-      </div>
-      <div className="p-4 bg-white rounded-3xl shadow-md w-40 hover:shadow-lg transition">
-        <p className="text-sm font-medium">Logic & Math</p>
-      </div>
-      <div className="p-4 bg-white rounded-3xl shadow-md w-40 hover:shadow-lg transition">
-        <p className="text-sm font-medium">Chemistry</p>
-      </div>
-    </div>
-  );
-};
-
+// ✅ Ensure only one default export
 export default Dashboard;
